@@ -1,0 +1,22 @@
+{
+  "trains": [
+    {
+      "train_number": "12627",
+      "train_name": "Karnataka Express",
+      "from": "Bangalore",
+      "to": "New Delhi",
+      "departure": "22:00",
+      "arrival": "06:15+2",
+      "frequency": "Daily"
+    },
+    {
+      "train_number": "12650",
+      "train_name": "Karnataka Sampark Kranti",
+      "from": "Yesvantpur",
+      "to": "New Delhi",
+      "departure": "18:45",
+      "arrival": "03:20+2",
+      "frequency": "Daily"
+    }
+  ]
+}

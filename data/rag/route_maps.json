@@ -1,0 +1,18 @@
+{
+  "routes": [
+    {
+      "route_id": "R001",
+      "name": "Southern Route",
+      "stations": ["Bangalore", "Jolarpettai", "Katpadi", "Chennai", "Vijayawada", "New Delhi"],
+      "total_distance_km": 2444,
+      "major_junctions": ["Bangalore", "Chennai", "Vijayawada"]
+    },
+    {
+      "route_id": "R002",
+      "name": "Western Route",
+      "stations": ["Mumbai", "Surat", "Vadodara", "Ahmedabad", "Jaipur", "Delhi"],
+      "total_distance_km": 1384,
+      "major_junctions": ["Mumbai", "Vadodara", "Jaipur"]
+    }
+  ]
+}
