@@ -1,10 +1,9 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
-import { 
-  HomeIcon, 
-  ClockIcon, 
-  UserGroupIcon, 
-  UsersIcon, 
-  BellIcon, 
+import {
+  HomeIcon,
+  ClockIcon,
+  UserGroupIcon,
+  BellIcon,
   CpuChipIcon,
   Bars3Icon,
   XMarkIcon
@@ -15,7 +14,6 @@ const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Train Delay', href: '/train-delay', icon: ClockIcon },
   { name: 'Passenger Query', href: '/passenger-query', icon: UserGroupIcon },
-  { name: 'Crowd Prediction', href: '/crowd-prediction', icon: UsersIcon },
   { name: 'Alerts', href: '/alerts', icon: BellIcon },
   { name: 'Agents', href: '/agents', icon: CpuChipIcon },
 ]
@@ -47,8 +45,8 @@ export default function Layout() {
                     onClick={() => setSidebarOpen(false)}
                     className={`
                       group flex items-center px-3 py-2 text-sm font-medium rounded-md
-                      ${isActive 
-                        ? 'bg-blue-50 text-blue-600' 
+                      ${isActive
+                        ? 'bg-blue-50 text-blue-600'
                         : 'text-gray-700 hover:bg-gray-50'
                       }
                     `}
@@ -78,8 +76,8 @@ export default function Layout() {
                   to={item.href}
                   className={`
                     group flex items-center px-3 py-2 text-sm font-medium rounded-md
-                    ${isActive 
-                      ? 'bg-blue-50 text-blue-600' 
+                    ${isActive
+                      ? 'bg-blue-50 text-blue-600'
                       : 'text-gray-700 hover:bg-gray-50'
                     }
                   `}

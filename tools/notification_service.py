@@ -2,7 +2,12 @@
 Notification Service - Sends notifications via multiple channels
 """
 from typing import Dict, Any, List
-from twilio.rest import Client
+try:
+    from twilio.rest import Client
+    HAS_TWILIO = True
+except ImportError:
+    HAS_TWILIO = False
+
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -22,11 +27,14 @@ class NotificationService:
     def __init__(self):
         # Initialize Twilio client if credentials are available
         self.twilio_client = None
-        if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
+        if HAS_TWILIO and TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
             try:
                 self.twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
             except Exception as e:
                 print(f"Failed to initialize Twilio: {e}")
+        elif not HAS_TWILIO:
+            print("⚠️  Twilio not found. SMS notifications disabled.")
+
     
     def send_sms(self, recipients: List[Dict[str, Any]], message: str) -> Dict[str, Any]:
         """

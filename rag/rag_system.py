@@ -2,7 +2,13 @@
 RAG System - Retrieval Augmented Generation
 Manages vector store and retrieval for passenger intelligence
 """
-from sentence_transformers import SentenceTransformer
+try:
+    from sentence_transformers import SentenceTransformer
+    HAS_SENTENCE_TRANSFORMERS = True
+except ImportError:
+    HAS_SENTENCE_TRANSFORMERS = False
+    print("⚠️  sentence-transformers not found. RAG will be disabled/mocked.")
+
 from typing import List, Dict, Any
 import json
 import os
@@ -17,7 +23,11 @@ class RAGSystem:
     """
     
     def __init__(self):
-        self.embedding_model = SentenceTransformer(EMBEDDING_MODEL)
+        if HAS_SENTENCE_TRANSFORMERS:
+            self.embedding_model = SentenceTransformer(EMBEDDING_MODEL)
+        else:
+            self.embedding_model = None
+
         
         # Initialize in-memory storage
         os.makedirs(VECTOR_STORE_PATH, exist_ok=True)
@@ -80,11 +90,12 @@ class RAGSystem:
                 text = str(doc)
             
             # Generate embedding
-            embedding = self.embedding_model.encode([text])[0]
+            if self.embedding_model:
+                embedding = self.embedding_model.encode([text])[0]
+                self.embeddings[collection_name].append(embedding)
             
             # Store
             self.documents[collection_name].append(doc)
-            self.embeddings[collection_name].append(embedding)
     
     def retrieve(self, query: str, top_k: int = 5, 
                 collection_name: str = None) -> List[Dict[str, Any]]:
@@ -96,6 +107,18 @@ class RAGSystem:
             top_k: Number of results to return
             collection_name: Specific collection to search (None = search all)
         """
+        if not self.embedding_model:
+            # Mock retrieval
+            print("⚠️  RAG Retrieval in Mock Mode")
+            return [
+                {
+                    "content": "Mock Result: Train 12627 leaves at 10:00 AM.",
+                    "metadata": {"type": "timetable"},
+                    "similarity": 0.99,
+                    "source": "mock"
+                }
+            ]
+
         # Generate query embedding
         query_embedding = self.embedding_model.encode([query])[0]
         

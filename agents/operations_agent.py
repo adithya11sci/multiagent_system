@@ -2,7 +2,10 @@
 Operations Agent - Train Operations Intelligence
 Handles train schedules, delay propagation, and operational decisions
 """
-import google.generativeai as genai
+import os
+from config import AGENT_CONFIG, MOCK_MODE
+from utils.llm_client import LLMClient
+
 from typing import Dict, List, Any, Optional
 import json
 from datetime import datetime, timedelta
@@ -19,8 +22,13 @@ class OperationsAgent:
     """
     
     def __init__(self):
-        genai.configure(api_key=GEMINI_API_KEY)
-        self.model = genai.GenerativeModel(AGENT_CONFIG["operations"]["model"])
+        if not MOCK_MODE:
+            try:
+                self.model = LLMClient(AGENT_CONFIG["operations"])
+            except:
+                self.model = None
+        else:
+            self.model = None
         self.schedule_tool = TrainScheduleTool()
         self.delay_simulator = DelaySimulator()
         
@@ -113,6 +121,14 @@ Respond in JSON format:
 }}
 """
         
+        if MOCK_MODE or not self.model:
+            return {
+                "impact_summary": f"Mock Analysis for train {train_number}",
+                "severity": "medium",
+                "affected_stations": [{"station": "Station A", "delay": delay_minutes}],
+                "recommendations": [{"action": "Inform passengers", "priority": "high"}]
+            }
+
         try:
             response = self.model.generate_content(prompt)
             analysis = self._parse_response(response.text)

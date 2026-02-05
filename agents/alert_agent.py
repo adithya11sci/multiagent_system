@@ -2,7 +2,10 @@
 Alert & Action Agent - External Actions and Notifications
 Handles sending alerts and triggering automated actions
 """
-import google.generativeai as genai
+import os
+from config import AGENT_CONFIG, MOCK_MODE
+from utils.llm_client import LLMClient
+
 from typing import Dict, List, Any, Optional
 import json
 from datetime import datetime
@@ -22,8 +25,13 @@ class AlertAgent:
     """
     
     def __init__(self):
-        genai.configure(api_key=GEMINI_API_KEY)
-        self.model = genai.GenerativeModel(AGENT_CONFIG["alert"]["model"])
+        if not MOCK_MODE:
+            try:
+                self.model = LLMClient(AGENT_CONFIG["alert"])
+            except:
+                 self.model = None
+        else:
+            self.model = None
         self.notification_service = NotificationService()
         
     def create_alert(self, alert_type: str, target_audience: str, 
@@ -90,6 +98,13 @@ Respond in JSON format:
 }}
 """
         
+        if MOCK_MODE or not self.model:
+             return {
+                 "alert_id": "mock_alert_1",
+                 "messages": {"sms": f"Mock Alert: {alert_type}"},
+                 "delivery_status": {"sms": {"sent": 1, "failed": 0}}
+             }
+
         try:
             response = self.model.generate_content(prompt)
             alert_spec = self._parse_response(response.text)

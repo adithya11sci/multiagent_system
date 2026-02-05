@@ -81,10 +81,6 @@ class PassengerQueryRequest(BaseModel):
     query: str
     passenger_id: Optional[str] = None
 
-class CrowdPredictionRequest(BaseModel):
-    train_number: str
-    route: str
-    time: Optional[str] = None
 
 class AlertRequest(BaseModel):
     message: str
@@ -165,7 +161,6 @@ async def health_check():
             "planner": True,
             "operations": True,
             "passenger": True,
-            "crowd": True,
             "alert": True
         },
         "timestamp": datetime.now().isoformat()
@@ -250,32 +245,6 @@ async def handle_passenger_query(query_request: PassengerQueryRequest):
             timestamp=datetime.now().isoformat()
         )
 
-@app.post("/api/crowd-prediction", response_model=ResponseModel)
-async def predict_crowd(crowd_request: CrowdPredictionRequest):
-    """Predict crowd levels"""
-    try:
-        request = f"Predict crowd levels for train {crowd_request.train_number} on route {crowd_request.route}"
-        
-        context = {
-            "train_number": crowd_request.train_number,
-            "route": crowd_request.route,
-            "time": crowd_request.time or datetime.now().isoformat()
-        }
-        
-        result = orchestrator.run(request, context)
-        
-        return ResponseModel(
-            success=True,
-            data=result,
-            timestamp=datetime.now().isoformat()
-        )
-    
-    except Exception as e:
-        return ResponseModel(
-            success=False,
-            error=str(e),
-            timestamp=datetime.now().isoformat()
-        )
 
 @app.post("/api/send-alert", response_model=ResponseModel)
 async def send_alert(alert_request: AlertRequest):
@@ -312,7 +281,6 @@ async def get_agents_status():
         "planner": {"status": "active", "description": "Master coordinator"},
         "operations": {"status": "active", "description": "Train operations management"},
         "passenger": {"status": "active", "description": "Customer service with RAG"},
-        "crowd": {"status": "active", "description": "Crowd prediction"},
         "alert": {"status": "active", "description": "Multi-channel alerts"},
         "timestamp": datetime.now().isoformat()
     }
@@ -392,15 +360,7 @@ async def get_demo_scenarios():
                     "query": "What is the refund policy for cancelled trains?"
                 }
             },
-            {
-                "id": "crowd",
-                "name": "Crowd Prediction",
-                "description": "Predict overcrowding and suggest alternatives",
-                "example": {
-                    "train_number": "12644",
-                    "route": "Chennai-Bangalore"
-                }
-            },
+
             {
                 "id": "emergency",
                 "name": "Emergency Alert",

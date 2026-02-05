@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
-import { 
-  ClockIcon, 
-  UserGroupIcon, 
-  UsersIcon, 
+import {
+  ClockIcon,
+  UserGroupIcon,
   BellIcon,
   ChartBarIcon,
   CheckCircleIcon
@@ -68,13 +67,7 @@ export default function Dashboard() {
       href: '/passenger-query',
       color: 'bg-blue-500',
     },
-    {
-      name: 'Crowd Prediction',
-      description: 'Predict overcrowding and optimize capacity',
-      icon: UsersIcon,
-      href: '/crowd-prediction',
-      color: 'bg-purple-500',
-    },
+
     {
       name: 'Send Alert',
       description: 'Multi-channel notifications',
@@ -192,9 +185,8 @@ export default function Dashboard() {
                 <h3 className="text-sm font-medium text-gray-900 capitalize">{name} Agent</h3>
                 <p className="text-xs text-gray-500">{agent.description}</p>
               </div>
-              <span className={`badge ${
-                agent.status === 'active' ? 'badge-success' : 'badge-error'
-              }`}>
+              <span className={`badge ${agent.status === 'active' ? 'badge-success' : 'badge-error'
+                }`}>
                 {agent.status}
               </span>
             </div>
@@ -213,7 +205,7 @@ export default function Dashboard() {
           <div className="ml-3">
             <h3 className="text-sm font-medium text-blue-900">About This System</h3>
             <p className="mt-2 text-sm text-blue-700">
-              This multi-agent AI system uses 5 specialized agents powered by Google Gemini Pro and orchestrated with LangGraph. 
+              This multi-agent AI system uses specialized agents powered by Google Gemini Pro and orchestrated with LangGraph.
               Each agent is an expert in their domain, working together to provide intelligent railway management solutions.
             </p>
           </div>

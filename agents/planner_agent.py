@@ -5,7 +5,14 @@ Responsible for task decomposition and decision-making
 import google.generativeai as genai
 from typing import Dict, List, Any
 import json
-from config import GEMINI_API_KEY, AGENT_CONFIG
+import logging
+import os
+from config import AGENT_CONFIG, MOCK_MODE
+from utils.llm_client import LLMClient
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class PlannerAgent:
     """
@@ -14,21 +21,83 @@ class PlannerAgent:
     """
     
     def __init__(self):
-        genai.configure(api_key=GEMINI_API_KEY)
-        self.model = genai.GenerativeModel(AGENT_CONFIG["planner"]["model"])
+        self.config = AGENT_CONFIG["planner"]
         self.global_state = {}
-        
+        if not MOCK_MODE:
+            try:
+                self.model = LLMClient(self.config)
+            except Exception as e:
+                logger.error(f"Failed to configure LLM: {e}")
+                self.model = None
+        else:
+            self.model = None
+
     def analyze_request(self, request: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
         """
-        Analyze incoming request and create execution plan
-        
-        Args:
-            request: User/system request (e.g., "Train 12627 delayed by 45 minutes")
-            context: Additional context information
-            
-        Returns:
-            Execution plan with subtasks and agent assignments
+        Process user request and decompose into subtasks
         """
+        context = context or {}
+        input_data = {"request": request, "context": context}
+        logger.info(f"Planner Agent processing: {input_data}")
+        
+        if MOCK_MODE or not self.model:
+            # Mock mode logic
+
+            
+            mock_plan = {
+                "request_type": "mock",
+                "priority": "medium",
+                "subtasks": [],
+                "expected_outcome": "Mock plan generated based on request."
+            }
+
+            if "delay" in request.lower():
+                mock_plan["request_type"] = "delay"
+                mock_plan["subtasks"].append({
+                    "task_id": "1",
+                    "description": "Check delay status for train",
+                    "agent": "operations",
+                    "dependencies": [],
+                    "execution_type": "sequential",
+                    "inputs": {"train_id": "12627" if "12627" in request else "unknown"}
+                })
+                mock_plan["subtasks"].append({
+                    "task_id": "2",
+                    "description": "Inform passengers about delay",
+                    "agent": "passenger",
+                    "dependencies": ["1"],
+                    "execution_type": "sequential",
+                    "inputs": {"message": "Train delayed"}
+                })
+                mock_plan["expected_outcome"] = "Train delay handled and passengers informed."
+            elif "capacity" in request.lower() or "crowd" in request.lower():
+                mock_plan["request_type"] = "capacity"
+                mock_plan["subtasks"].append({
+                    "task_id": "1",
+                    "description": "Analyze crowd levels",
+                    "agent": "crowd",
+                    "dependencies": [],
+                    "execution_type": "sequential",
+                    "inputs": {"location": "station_A"}
+                })
+                mock_plan["expected_outcome"] = "Crowd levels analyzed."
+            else:
+                mock_plan["subtasks"].append({
+                    "task_id": "1",
+                    "description": "Generic inquiry processing",
+                    "agent": "operations",
+                    "dependencies": [],
+                    "execution_type": "sequential",
+                    "inputs": {"query": request}
+                })
+                mock_plan["expected_outcome"] = "Generic request processed."
+
+            logger.info(f"Returning mock plan: {mock_plan}")
+            return mock_plan
+        
+        # Original analyze_request logic
+
+
         prompt = f"""
 You are the Planner Agent - the master brain of a railway intelligence system.
 

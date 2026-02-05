@@ -2,7 +2,11 @@
 Passenger Intelligence Agent - RAG-Powered Assistance
 Handles passenger queries, alternative suggestions, and policy information
 """
-import google.generativeai as genai
+import logging
+import os
+from config import AGENT_CONFIG, MOCK_MODE
+from utils.llm_client import LLMClient
+
 from typing import Dict, List, Any, Optional
 import json
 from config import GEMINI_API_KEY, AGENT_CONFIG
@@ -23,8 +27,13 @@ class PassengerAgent:
     """
     
     def __init__(self):
-        genai.configure(api_key=GEMINI_API_KEY)
-        self.model = genai.GenerativeModel(AGENT_CONFIG["passenger"]["model"])
+        if not MOCK_MODE:
+             try:
+                self.model = LLMClient(AGENT_CONFIG["passenger"])
+             except:
+                 self.model = None
+        else:
+            self.model = None
         self.rag_system = RAGSystem()
         
     def answer_query(self, query: str, passenger_context: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -81,6 +90,15 @@ Respond in JSON format:
 }}
 """
         
+        if MOCK_MODE or not self.model:
+            return {
+                "answer": f"Mock Answer: Based on your query '{query}', here are some details...",
+                "alternatives": [{"option": "Mock Train 1", "details": "On time"}],
+                "policies": [{"rule": "Mock Policy", "description": "Always valid"}],
+                "confidence": 1.0,
+                "rag_sources": ["mock_data"]
+            }
+
         try:
             response = self.model.generate_content(prompt)
             answer = self._parse_response(response.text)
@@ -153,6 +171,21 @@ Respond in JSON format with ranked alternatives:
 }}
 """
         
+        if MOCK_MODE or not self.model:
+             return {
+                "alternatives": [
+                    {
+                        "train_number": "Mock123",
+                        "train_name": "Mock Express",
+                        "departure": "10:00",
+                        "arrival": "18:00",
+                        "fare_difference": "+100",
+                        "seats_available": "Yes",
+                        "recommendation_score": 0.95
+                    }
+                ]
+             }
+
         try:
             response = self.model.generate_content(prompt)
             return self._parse_response(response.text)

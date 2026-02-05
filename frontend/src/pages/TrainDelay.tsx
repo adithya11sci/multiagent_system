@@ -23,8 +23,8 @@ export default function TrainDelay() {
         train_number: formData.train_number,
         delay_minutes: parseInt(formData.delay_minutes),
         current_location: formData.current_location,
-        affected_passengers: formData.affected_passengers 
-          ? parseInt(formData.affected_passengers) 
+        affected_passengers: formData.affected_passengers
+          ? parseInt(formData.affected_passengers)
           : undefined,
       })
 
@@ -156,7 +156,7 @@ export default function TrainDelay() {
         {/* Results */}
         <div className="card">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">AI Response</h2>
-          
+
           {!result && !loading && (
             <div className="text-center py-12 text-gray-400">
               <ClockIcon className="h-12 w-12 mx-auto mb-3" />
@@ -173,33 +173,31 @@ export default function TrainDelay() {
 
           {result && (
             <div className="space-y-4">
-              {result.final_response && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-900 mb-2">Summary</h3>
-                  <p className="text-sm text-blue-800 whitespace-pre-wrap">
-                    {result.final_response.summary || JSON.stringify(result.final_response, null, 2)}
-                  </p>
-                </div>
-              )}
-
-              {result.operations_result && result.operations_result.length > 0 && (
+              {/* Operations Analysis */}
+              {result.results?.operations && result.results.operations.length > 0 && (
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
                   <h3 className="font-semibold text-orange-900 mb-2">Operations Analysis</h3>
                   <div className="text-sm text-orange-800 space-y-2">
-                    {result.operations_result.map((op: any, idx: number) => (
+                    {result.results.operations.map((op: any, idx: number) => (
                       <div key={idx} className="whitespace-pre-wrap">
-                        {typeof op === 'string' ? op : JSON.stringify(op, null, 2)}
+                        {/* Handle both mock string result and real dict result */}
+                        {typeof op === 'string' ? op : (
+                          <div>
+                            <span className="font-bold">{op.task}:</span> {JSON.stringify(op)}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {result.alert_result && result.alert_result.length > 0 && (
+              {/* Alerts Sent */}
+              {result.results?.alert && result.results.alert.length > 0 && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                   <h3 className="font-semibold text-red-900 mb-2">Alerts Sent</h3>
                   <div className="text-sm text-red-800 space-y-2">
-                    {result.alert_result.map((alert: any, idx: number) => (
+                    {result.results.alert.map((alert: any, idx: number) => (
                       <div key={idx} className="whitespace-pre-wrap">
                         {typeof alert === 'string' ? alert : JSON.stringify(alert, null, 2)}
                       </div>
@@ -207,6 +205,14 @@ export default function TrainDelay() {
                   </div>
                 </div>
               )}
+
+              {/* Plan Summary / Debug */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-4">
+                <h3 className="font-semibold text-gray-700 mb-2">Execution Plan</h3>
+                <pre className="text-xs text-gray-600 overflow-auto max-h-40">
+                  {JSON.stringify(result.plan, null, 2)}
+                </pre>
+              </div>
             </div>
           )}
         </div>

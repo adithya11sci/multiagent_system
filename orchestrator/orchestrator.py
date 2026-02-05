@@ -3,11 +3,17 @@ LangGraph Orchestrator - Multi-Agent Coordination
 Orchestrates agent execution using LangGraph state machine
 """
 from typing import Dict, Any, List, TypedDict, Annotated
-from langgraph.graph import StateGraph, END
+try:
+    from langgraph.graph import StateGraph, END
+except ImportError:
+    print("❌ LangGraph not found. Orchestrator will fail.")
+    # We could implement a mock StateGraph here if needed, but for now let's hope it's installed
+    pass
+
 import operator
 from agents import (
     PlannerAgent, OperationsAgent, PassengerAgent, 
-    CrowdAgent, AlertAgent
+    AlertAgent
 )
 
 class AgentState(TypedDict):
@@ -17,7 +23,6 @@ class AgentState(TypedDict):
     plan: Dict[str, Any]
     operations_result: Annotated[List[Dict], operator.add]
     passenger_result: Annotated[List[Dict], operator.add]
-    crowd_result: Annotated[List[Dict], operator.add]
     alert_result: Annotated[List[Dict], operator.add]
     final_response: Dict[str, Any]
     iteration: int
@@ -34,7 +39,6 @@ class RailwayOrchestrator:
         self.planner = PlannerAgent()
         self.operations = OperationsAgent()
         self.passenger = PassengerAgent()
-        self.crowd = CrowdAgent()
         self.alert = AlertAgent()
         
         # Build the graph
@@ -50,7 +54,6 @@ class RailwayOrchestrator:
         workflow.add_node("planner", self._planner_node)
         workflow.add_node("operations", self._operations_node)
         workflow.add_node("passenger", self._passenger_node)
-        workflow.add_node("crowd", self._crowd_node)
         workflow.add_node("alert", self._alert_node)
         workflow.add_node("synthesize", self._synthesize_node)
         
@@ -64,7 +67,6 @@ class RailwayOrchestrator:
             {
                 "operations": "operations",
                 "passenger": "passenger",
-                "crowd": "crowd",
                 "alert": "alert",
                 "end": END
             }
@@ -73,7 +75,6 @@ class RailwayOrchestrator:
         # All agents flow to synthesize
         workflow.add_edge("operations", "synthesize")
         workflow.add_edge("passenger", "synthesize")
-        workflow.add_edge("crowd", "synthesize")
         workflow.add_edge("alert", "synthesize")
         
         # Synthesize can loop back to planner or end
@@ -114,7 +115,7 @@ class RailwayOrchestrator:
         plan = state["plan"]
         operations_tasks = [
             task for task in plan.get("subtasks", [])
-            if task.get("agent") == "operations"
+            if task.get("agent", "").lower() == "operations"
         ]
         
         results = []
@@ -142,7 +143,7 @@ class RailwayOrchestrator:
         plan = state["plan"]
         passenger_tasks = [
             task for task in plan.get("subtasks", [])
-            if task.get("agent") == "passenger"
+            if task.get("agent", "").lower() == "passenger"
         ]
         
         results = []
@@ -167,31 +168,7 @@ class RailwayOrchestrator:
         state["passenger_result"] = results
         return state
     
-    def _crowd_node(self, state: AgentState) -> AgentState:
-        """
-        Crowd agent node - handles crowd management
-        """
-        plan = state["plan"]
-        crowd_tasks = [
-            task for task in plan.get("subtasks", [])
-            if task.get("agent") == "crowd"
-        ]
-        
-        results = []
-        for task in crowd_tasks:
-            if "overcrowd" in task.get("description", "").lower():
-                train = task.get("inputs", {}).get("train_number", "")
-                date = task.get("inputs", {}).get("travel_date", "")
-                result = self.crowd.predict_overcrowding(train, date)
-            else:
-                result = {"task": task["description"], "status": "completed"}
-            
-            results.append(result)
-            self.planner.update_state(task["task_id"], result)
-        
-        state["crowd_result"] = results
-        return state
-    
+
     def _alert_node(self, state: AgentState) -> AgentState:
         """
         Alert agent node - handles notifications
@@ -199,7 +176,7 @@ class RailwayOrchestrator:
         plan = state["plan"]
         alert_tasks = [
             task for task in plan.get("subtasks", [])
-            if task.get("agent") == "alert"
+            if task.get("agent", "").lower() == "alert"
         ]
         
         results = []
@@ -225,7 +202,6 @@ class RailwayOrchestrator:
             "results": {
                 "operations": state.get("operations_result", []),
                 "passenger": state.get("passenger_result", []),
-                "crowd": state.get("crowd_result", []),
                 "alert": state.get("alert_result", [])
             },
             "status": "completed",
@@ -247,8 +223,8 @@ class RailwayOrchestrator:
         
         # Get the first uncompleted task
         for task in subtasks:
-            agent = task.get("agent", "")
-            if agent in ["operations", "passenger", "crowd", "alert"]:
+            agent = task.get("agent", "").lower()
+            if agent in ["operations", "passenger", "alert"]:
                 return agent
         
         return "end"
@@ -306,7 +282,6 @@ class RailwayOrchestrator:
             "plan": {},
             "operations_result": [],
             "passenger_result": [],
-            "crowd_result": [],
             "alert_result": [],
             "final_response": {},
             "iteration": 0,
